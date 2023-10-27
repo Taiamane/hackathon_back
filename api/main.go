@@ -11,6 +11,8 @@ import (
 	"syscall"
 	"unicode/utf8"
 
+	"github.com/oklog/ulid"
+
 	_ "github.com/go-sql-driver/mysql"
 )
 
