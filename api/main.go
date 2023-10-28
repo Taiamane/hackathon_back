@@ -27,7 +27,7 @@ type UserResForHTTPGet struct {
 var db *sql.DB
 
 func init() {
-	err := godotenv.Load(".env")
+	err := godotenv.Load("./.env")
 
 	// もし err がnilではないなら、"読み込み出来ませんでした"が出力されます。
 	if err != nil {
@@ -35,19 +35,17 @@ func init() {
 	}
 
 	// ①-1
-	//mysqlUser := os.Getenv("USER")
-	//mysqlUserPwd := os.Getenv("PW")
-	//mysqlDatabase := os.Getenv("DB")
-
+	/* mysqlUser := os.Getenv("MYSQL_USER")
+	mysqlUserPwd := os.Getenv("MYSQL_PASSWORD")
+	mysqlDatabase := os.Getenv("MYSQL_DATABASE")
+	mysqlHost := os.Getenv("MYSQL_HOST")
+	*/
 	mysqlUser := os.Getenv("MYSQL_USER")
 	mysqlUserPwd := os.Getenv("MYSQL_PWD")
 	mysqlHost := os.Getenv("MYSQL_HOST")
 	mysqlDatabase := os.Getenv("MYSQL_DATABASE")
 
 	connStr := fmt.Sprintf("%s:%s@%s/%s", mysqlUser, mysqlUserPwd, mysqlHost, mysqlDatabase)
-	//connStr :=fmt.Sprintf("%s:%s@(localhost:3306)/%s", mysqlUser, mysqlUserPwd, mysqlDatabase)
-
-	//開発環境での接続では下のconnStrを使う
 
 	// ①-2
 	_db, err := sql.Open("mysql", connStr)
