@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"unicode/utf8"
 
+	"github.com/joho/godotenv"
 	"github.com/oklog/ulid"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -26,13 +27,30 @@ type UserResForHTTPGet struct {
 var db *sql.DB
 
 func init() {
+	err := godotenv.Load(".env")
+
+	// もし err がnilではないなら、"読み込み出来ませんでした"が出力されます。
+	if err != nil {
+		fmt.Printf("読み込み出来ませんでした: %v", err)
+	}
+
 	// ①-1
-	mysqlUser := os.Getenv("user")
-	mysqlUserPwd := os.Getenv("pw")
-	mysqlDatabase := os.Getenv("db")
+	//mysqlUser := os.Getenv("USER")
+	//mysqlUserPwd := os.Getenv("PW")
+	//mysqlDatabase := os.Getenv("DB")
+
+	mysqlUser := os.Getenv("MYSQL_USER")
+	mysqlUserPwd := os.Getenv("MYSQL_PWD")
+	mysqlHost := os.Getenv("MYSQL_HOST")
+	mysqlDatabase := os.Getenv("MYSQL_DATABASE")
+
+	connStr := fmt.Sprintf("%s:%s@%s/%s", mysqlUser, mysqlUserPwd, mysqlHost, mysqlDatabase)
+	//connStr :=fmt.Sprintf("%s:%s@(localhost:3306)/%s", mysqlUser, mysqlUserPwd, mysqlDatabase)
+
+	//開発環境での接続では下のconnStrを使う
 
 	// ①-2
-	_db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@(localhost:3306)/%s", mysqlUser, mysqlUserPwd, mysqlDatabase))
+	_db, err := sql.Open("mysql", connStr)
 	if err != nil {
 		log.Fatalf("fail: sql.Open, %v\n", err)
 	}
