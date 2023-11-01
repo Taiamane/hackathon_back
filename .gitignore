@@ -23,3 +23,8 @@ go.work
 
 #ローカルPW
 .env
+
+#証明書類
+client-key.pem
+client-cert.pem
+server-ca.pem
