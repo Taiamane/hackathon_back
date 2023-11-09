@@ -10,7 +10,6 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-	"unicode/utf8"
 
 	"github.com/oklog/ulid"
 
@@ -120,50 +119,39 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			w.Write(bytes)
 		}
 
-		// 11月9日　後でここから続きやろう
 	case http.MethodPost:
 		time := time.Now()
 		Id := ulid.MustNew(ulid.Timestamp(time), nil)
 
-		var userData struct {
-			Category   string `json:"category"`
-			Curriculum string `json:"curriculum"`
-			Title      string `json:"title"`
-			Link       string `json:"link"`
-			Summary    string `json:"summary"` //ここまで終わった
-			Name       string `json:"name"`
-			Age        int    `json:"age"`
+		var requestData struct {
+			Category    string `json:"category"`
+			Curriculum  string `json:"curriculum"`
+			Title       string `json:"title"`
+			Link        string `json:"link"`
+			Summary     string `json:"summary"` //ここまで終わった
+			Made_day    string `json:"made_day"`
+			Updated_day string `json:"updated_day"`
 		}
 
-		err := json.NewDecoder(r.Body).Decode(&userData)
+		err := json.NewDecoder(r.Body).Decode(requestData)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
-		if userData.Name == "" {
-			log.Println("fail: name is empty")
+		if requestData.Category == "" {
+			log.Println("fail: category is empty")
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
-		if utf8.RuneCountInString(userData.Name) > 50 {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		if userData.Age < 20 || userData.Age > 80 {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		row, err := db.Exec("INSERT INTO user(id, name,age) VALUES(?,?,?)", Id.String(), userData.Name, userData.Age)
+		row, err := db.Exec("INSERT INTO ITEMS(CATEGORY,CURRICULUM,TITLE,LINK,SUMMARY,MADE_DAY) VALUES(?,?,?,?,?,?)", requestData.Category, requestData.Curriculum, requestData.Title, requestData.Link, requestData.Summary, Id)
 		if err != nil {
-			log.Printf("fail: db.Query, %v\n", err)
+			log.Printf("fail: db.Exec, %v\n", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		if row != nil {
+		if row != nil { //post成功時
 			w.WriteHeader(http.StatusAccepted)
 			allUsers := map[string]string{"id": Id.String()}
 			response, err := json.Marshal(allUsers)
