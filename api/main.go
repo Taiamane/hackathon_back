@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 	"unicode/utf8"
 
 	"github.com/oklog/ulid"
@@ -121,12 +122,17 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 		// 11月9日　後でここから続きやろう
 	case http.MethodPost:
-
-		Id := ulid.MustNew(ulid.Now(), nil)
+		time := time.Now()
+		Id := ulid.MustNew(ulid.Timestamp(time), nil)
 
 		var userData struct {
-			Name string `json:"name"`
-			Age  int    `json:"age"`
+			Category   string `json:"category"`
+			Curriculum string `json:"curriculum"`
+			Title      string `json:"title"`
+			Link       string `json:"link"`
+			Summary    string `json:"summary"` //ここまで終わった
+			Name       string `json:"name"`
+			Age        int    `json:"age"`
 		}
 
 		err := json.NewDecoder(r.Body).Decode(&userData)
