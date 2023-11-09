@@ -59,7 +59,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		curriculum := r.URL.Query().Get("curriculum")
 		if curriculum == "" {
-			rows, err := db.Query("SELECT Category ,curriculum,title,link,summary,made_date,updated_day FROM ITEMS ")
+			rows, err := db.Query("SELECT CATEGORY ,CURRICULUM,TITLE,LINK,SUMMARY,MADE_DATE,UPDATED_DAY FROM ITEMS ")
 			if err != nil {
 				log.Printf("fail: db.Query, %v\n", err)
 				w.WriteHeader(http.StatusInternalServerError)
