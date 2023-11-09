@@ -11,28 +11,25 @@ import (
 	"syscall"
 	"unicode/utf8"
 
-	"github.com/joho/godotenv"
 	"github.com/oklog/ulid"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
-type UserResForHTTPGet struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
-	Age  int    `json:"age"`
+type ItemData struct {
+	Category    string `json:"category"`
+	Curriculum  string `json:"curriculum"`
+	Title       string `json:"title"`
+	Link        string `json:"link"`
+	Summary     string `json:"sumary"`
+	Made_day    string `json:"made_day"`
+	Updated_day string `json:"updated_day"`
 }
 
 // ① GoプログラムからMySQLへ接続
 var db *sql.DB
 
 func init() {
-	err := godotenv.Load("./.env")
-
-	// もし err がnilではないなら、"読み込み出来ませんでした"が出力されます。
-	if err != nil {
-		fmt.Printf("読み込み出来ませんでした: %v", err)
-	}
 
 	mysqlUser := os.Getenv("MYSQL_USER")
 	mysqlUserPwd := os.Getenv("MYSQL_PWD")
@@ -54,46 +51,75 @@ func init() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000") //後でvercelのURLに書き換える
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type") //意味調査
 
 	switch r.Method {
 	case http.MethodGet:
-		// ②-2
-		rows, err := db.Query("SELECT name,age FROM user ")
-		if err != nil {
-			log.Printf("fail: db.Query, %v\n", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		// ②-3
-		users := make([]UserResForHTTPGet, 0)
-		for rows.Next() {
-			var u UserResForHTTPGet
-			if err := rows.Scan(&u.Name, &u.Age); err != nil {
-				log.Printf("fail: rows.Scan, %v\n", err)
-
-				if err := rows.Close(); err != nil { // 500を返して終了するが、その前にrowsのClose処理が必要
-					log.Printf("fail: rows.Close(), %v\n", err)
-				}
+		curriculum := r.URL.Query().Get("curriculum")
+		if curriculum == "" {
+			rows, err := db.Query("SELECT Category ,curriculum,title,link,summary,made_date,updated_day FROM ITEMS ")
+			if err != nil {
+				log.Printf("fail: db.Query, %v\n", err)
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-			users = append(users, u)
+			itemsdata := make([]ItemData, 0)
+			for rows.Next() {
+				var u ItemData
+				if err := rows.Scan(&u.Category, &u.Curriculum, &u.Title, &u.Link, &u.Summary, &u.Made_day, &u.Updated_day); err != nil {
+					log.Printf("fail: rows.Scan, %v\n", err)
+
+					if err := rows.Close(); err != nil { // 500を返して終了するが、その前にrowsのClose処理が必要
+						log.Printf("fail: rows.Close(), %v\n", err)
+					}
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				itemsdata = append(itemsdata, u)
+			}
+
+			bytes, err := json.Marshal(itemsdata)
+			if err != nil {
+				log.Printf("fail: json.Marshal, %v\n", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.Write(bytes)
+		} else {
+			rows, err := db.Query("SELECT category,curriculum,title,link,summary,made_day,updated_day FROM ITEMS WHERE curriculum = ?", curriculum)
+			if err != nil {
+				log.Printf("fail:db.Query,%v\n", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			itemsdata := make([]ItemData, 0)
+			for rows.Next() {
+				var u ItemData
+				if err := rows.Scan(u.Category, &u.Curriculum, &u.Title, &u.Link, &u.Summary, &u.Made_day, &u.Updated_day); err != nil {
+					log.Printf("fail:rows.Scan,%v\n", err)
+					if err := rows.Close(); err != nil {
+						log.Printf("fail:rows.Close(),%v\n", err)
+					}
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				itemsdata = append(itemsdata, u)
+			}
+
+			bytes, err := json.Marshal(itemsdata)
+			if err != nil {
+				log.Printf("fail: json.Marshal, %v\n", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.Write(bytes)
 		}
 
-		// ②-4
-		bytes, err := json.Marshal(users)
-		if err != nil {
-			log.Printf("fail: json.Marshal, %v\n", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(bytes)
-
+		// 11月9日　後でここから続きやろう
 	case http.MethodPost:
 
 		Id := ulid.MustNew(ulid.Now(), nil)
