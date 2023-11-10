@@ -22,7 +22,7 @@ type ItemData struct {
 	Curriculum  string `json:"curriculum"`
 	Title       string `json:"title"`
 	Link        string `json:"link"`
-	Summary     string `json:"sumary"`
+	Summary     string `json:"summary"`
 	Made_day    string `json:"made_day"`
 	Updated_day string `json:"updated_day"`
 }
@@ -31,6 +31,13 @@ type ItemData struct {
 var db *sql.DB
 
 func init() {
+
+	//デプロイ時はここを消す
+	//err := godotenv.Load(".env")
+
+	// if err != nil {
+	// 	fmt.Printf("読み込み出来ませんでした: %v", err)
+	// }
 
 	mysqlUser := os.Getenv("MYSQL_USER")
 	mysqlUserPwd := os.Getenv("MYSQL_PWD")
@@ -53,7 +60,7 @@ func init() {
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000") //後でvercelのURLに書き換える
-	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST,DELETE,PUT, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type") //意味調査
 
 	switch r.Method {
@@ -114,7 +121,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			Curriculum  string `json:"curriculum"`
 			Title       string `json:"title"`
 			Link        string `json:"link"`
-			Summary     string `json:"summary"` //ここまで終わった
+			Summary     string `json:"summary"`
 			Made_day    string `json:"made_day"`
 			Updated_day string `json:"updated_day"`
 		}
