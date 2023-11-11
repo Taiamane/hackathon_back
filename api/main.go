@@ -15,6 +15,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 )
 
 type ItemData struct {
@@ -33,11 +34,11 @@ var db *sql.DB
 func init() {
 
 	//デプロイ時はここを消す
-	//err := godotenv.Load(".env")
+	err := godotenv.Load(".env")
 
-	// if err != nil {
-	// 	fmt.Printf("読み込み出来ませんでした: %v", err)
-	// }
+	if err != nil {
+		fmt.Printf("読み込み出来ませんでした: %v", err)
+	}
 
 	mysqlUser := os.Getenv("MYSQL_USER")
 	mysqlUserPwd := os.Getenv("MYSQL_PWD")
