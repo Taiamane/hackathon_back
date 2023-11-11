@@ -2,8 +2,8 @@ FROM golang:1.18 as build
 WORKDIR /app
 
 COPY . .
-RUN go mod init api
-RUN go mod tidy
+RUN go mod init api \
+ && go mod tidy
 EXPOSE 8080
 
 
