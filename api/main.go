@@ -180,6 +180,18 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			w.Write(response)
 		}
+	case http.MethodDelete:
+		vars := mux.Vars(r)
+		title := vars["title"] // パスパラメータからタイトルを取得
+
+		_, err := db.Exec("DELETE FROM ITEMS WHERE TITLE=?", title)
+		if err != nil {
+			log.Printf("fail: db.Exec, %v\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
 	default:
 		log.Printf("fail: HTTP Method is %s\n", r.Method)
 		w.WriteHeader(http.StatusBadRequest)
@@ -248,9 +260,9 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
 	vars := mux.Vars(r)
-	id := vars["id"]
+	title := vars["title"]
 
-	_, err := db.Exec("DELETE FROM ITEMS WHERE MADE_DAY=?", id)
+	_, err := db.Exec("DELETE FROM ITEMS WHERE TITLE=?", title)
 	if err != nil {
 		log.Printf("fail: db.Exec, %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
