@@ -111,7 +111,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		itemsData := make([]ItemData, 0)
 		for rows.Next() {
 			var u ItemData
-			if err := rows.Scan(&u.Category, &u.Curriculum, &u.Title, &u.Link, &u.Summary, &u.Made_day, &u.Updated_day); err != nil {
+			var updatedDay sql.NullString
+			if err := rows.Scan(&u.Category, &u.Curriculum, &u.Title, &u.Link, &u.Summary, &u.Made_day, &updatedDay); err != nil {
 				log.Printf("fail: rows.Scan, %v\n", err)
 
 				if err := rows.Close(); err != nil { // 500を返して終了するが、その前にrowsのClose処理が必要
@@ -120,6 +121,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
+			u.Updated_day = updatedDay.String
 			itemsData = append(itemsData, u)
 		}
 		bytes, err := json.Marshal(itemsData)
