@@ -185,6 +185,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		title := vars["title"] // パスパラメータからタイトルを取得
 
 		_, err := db.Exec("DELETE FROM ITEMS WHERE TITLE=?", title)
+		log.Printf(title + "was Deleted")
 		if err != nil {
 			log.Printf("fail: db.Exec, %v\n", err)
 			w.WriteHeader(http.StatusInternalServerError)
