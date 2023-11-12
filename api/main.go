@@ -294,7 +294,7 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func handler_test(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*") // 後でVercelのURLに変更
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "OPTIONS,GET,POST,DELETE")
 	w.Header().Set("Access-Control-Allow-Headers", "*")
 	w.Header().Set("Content-Type", "application/json")
