@@ -111,8 +111,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		itemsData := make([]ItemData, 0)
 		for rows.Next() {
 			var u ItemData
-			//&u.Title, &u.Link, &u.Summary, &u.Made_day, &u.Updated_dayをとってみた
-			if err := rows.Scan(&u.Category, &u.Curriculum); err != nil {
+			if err := rows.Scan(&u.Category, &u.Curriculum, &u.Title, &u.Link, &u.Summary, &u.Made_day, &u.Updated_day); err != nil {
 				log.Printf("fail: rows.Scan, %v\n", err)
 
 				if err := rows.Close(); err != nil { // 500を返して終了するが、その前にrowsのClose処理が必要
