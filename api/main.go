@@ -316,8 +316,6 @@ func main() {
 
 	// ハンドラの登録
 	http.HandleFunc("/", handler)
-	// http.HandleFunc("/items", handler_test)
-	// http.HandleFunc("/items/{id}", detailHandler)
 	// http.HandleFunc("/items/{id}", editHandler)
 	// http.HandleFunc("/items/{id}", deleteHandler)
 
