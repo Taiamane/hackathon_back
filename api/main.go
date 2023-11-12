@@ -41,7 +41,7 @@ func init() {
 	}
 
 	mysqlUser := os.Getenv("MYSQL_USER")
-	mysqlUserPwd := os.Getenv("MYSQL_PWD")
+	mysqlUserPwd := os.Getenv("MYSQL_PASSWORD")
 	mysqlHost := os.Getenv("MYSQL_HOST")
 	mysqlDatabase := os.Getenv("MYSQL_DATABASE")
 
@@ -62,9 +62,19 @@ func init() {
 func handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000") //後でvercelのURLに書き換える
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST,DELETE,PUT, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type") //意味調査
+	w.Header().Set("Access-Control-Allow-Headers", "*")
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 
 	switch r.Method {
+	case http.MethodOptions:
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST,DELETE,PUT, OPTIONS")
+		return
 	case http.MethodGet:
 		sortKey := r.URL.Query().Get("sort")
 		order := "made_day DESC" // デフォルトのソート順（作成日時の降順）
@@ -74,15 +84,24 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		curriculum := r.URL.Query().Get("curriculum")
-		query := "SELECT category, curriculum, title, link, summary, made_day, updated_day FROM items"
+		query := "SELECT CATEGORY, CURRICULUM, TITLE, LINK, SUMMARY, MADE_DAY, UPDATED_DAY FROM ITEMS"
 
 		if curriculum != "" {
-			query += " WHERE curriculum = ?"
+			query += " WHERE CURRICULUM = ?"
 		}
 
 		query += fmt.Sprintf(" ORDER BY %s", order)
 
-		rows, err := db.Query(query, curriculum)
+		var rows *sql.Rows
+		var err error
+
+		if curriculum != "" {
+			rows, err = db.Query(query, curriculum)
+		} else {
+			rows, err = db.Query(query)
+		}
+
+		// rows, err := db.Query(query, curriculum)
 		if err != nil {
 			log.Printf("fail: db.Query, %v\n", err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -92,7 +111,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		itemsData := make([]ItemData, 0)
 		for rows.Next() {
 			var u ItemData
-			if err := rows.Scan(&u.Category, &u.Curriculum, &u.Title, &u.Link, &u.Summary, &u.Made_day, &u.Updated_day); err != nil {
+			//&u.Title, &u.Link, &u.Summary, &u.Made_day, &u.Updated_dayをとってみた
+			if err := rows.Scan(&u.Category, &u.Curriculum); err != nil {
 				log.Printf("fail: rows.Scan, %v\n", err)
 
 				if err := rows.Close(); err != nil { // 500を返して終了するが、その前にrowsのClose処理が必要
@@ -127,8 +147,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			Updated_day string `json:"updated_day"`
 		}
 
-		err := json.NewDecoder(r.Body).Decode(requestData)
+		err := json.NewDecoder(r.Body).Decode(&requestData)
 		if err != nil {
+			log.Println("リクエスト失敗")
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -139,7 +160,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		row, err := db.Exec("INSERT INTO ITEMS(CATEGORY,CURRICULUM,TITLE,LINK,SUMMARY,MADE_DAY) VALUES(?,?,?,?,?,?)", requestData.Category, requestData.Curriculum, requestData.Title, requestData.Link, requestData.Summary, Id)
+		row, err := db.Exec("INSERT INTO ITEMS(CATEGORY,CURRICULUM,TITLE,LINK,SUMMARY,MADE_DAY) VALUES(?,?,?,?,?,?)", requestData.Category, requestData.Curriculum, requestData.Title, requestData.Link, requestData.Summary, requestData.Made_day)
 		if err != nil {
 			log.Printf("fail: db.Exec, %v\n", err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -166,9 +187,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func detailHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000") // 後でVercelのURLに変更
-	w.Header().Set("Access-Control-Allow-Methods", "GET")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	// w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000") // 後でVercelのURLに変更
+	// w.Header().Set("Access-Control-Allow-Methods", "GET")
+	// w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -195,9 +216,9 @@ func detailHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func editHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000") // 後でVercelのURLに変更
-	w.Header().Set("Access-Control-Allow-Methods", "PUT")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	// w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000") // 後でVercelのURLに変更
+	// w.Header().Set("Access-Control-Allow-Methods", "PUT")
+	// w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -238,14 +259,33 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func handler_test(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*") // 後でVercelのURLに変更
+	w.Header().Set("Access-Control-Allow-Methods", "OPTIONS,GET,POST,DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "*")
+	w.Header().Set("Content-Type", "application/json")
+
+	switch r.Method {
+	case http.MethodOptions:
+		w.WriteHeader(http.StatusOK)
+		return
+	// case http.MethodGet:
+	// 	log.Println("hello")
+	default:
+		log.Printf("fail: HTTP Method is %s\n", r.Method)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+}
+
 func main() {
-	r := mux.NewRouter()
 
 	// ハンドラの登録
-	r.HandleFunc("/items", handler).Methods("GET", "POST")
-	r.HandleFunc("/items/{id}", detailHandler).Methods("GET")
-	r.HandleFunc("/items/{id}", editHandler).Methods("PUT")
-	r.HandleFunc("/items/{id}", deleteHandler).Methods("DELETE")
+	http.HandleFunc("/", handler)
+	// http.HandleFunc("/items", handler_test)
+	// http.HandleFunc("/items/{id}", detailHandler)
+	// http.HandleFunc("/items/{id}", editHandler)
+	// http.HandleFunc("/items/{id}", deleteHandler)
 
 	closeDBWithSysCall()
 
