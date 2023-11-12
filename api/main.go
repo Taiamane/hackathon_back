@@ -193,6 +193,26 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.WriteHeader(http.StatusNoContent)
+	case http.MethodPut:
+		vars := mux.Vars(r)
+		id := vars["id"] // URLからIDを取得
+
+		var requestData ItemData
+		err := json.NewDecoder(r.Body).Decode(&requestData)
+		if err != nil {
+			log.Printf("fail: json.NewDecoder, %v\n", err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		_, err = db.Exec("UPDATE ITEMS SET CATEGORY=?, CURRICULUM=?, TITLE=?, LINK=?, SUMMARY=?, UPDATED_DAY=? WHERE MADE_DAY=?", requestData.Category, requestData.Curriculum, requestData.Title, requestData.Link, requestData.Summary, time.Now(), id)
+		if err != nil {
+			log.Printf("fail: db.Exec, %v\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent) // 成功時は204 No Contentを返す
 	default:
 		log.Printf("fail: HTTP Method is %s\n", r.Method)
 		w.WriteHeader(http.StatusBadRequest)
