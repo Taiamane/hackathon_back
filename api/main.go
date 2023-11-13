@@ -60,14 +60,14 @@ func init() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000") //後でvercelのURLに書き換える
-	w.Header().Set("Access-Control-Allow-Methods", "GET, POST,DELETE,PUT, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Origin", "*") //後でvercelのURLに書き換える
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST,PUT,DELETE, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "*")
 	w.Header().Set("Content-Type", "application/json")
 
-	if r.Method == http.MethodOptions {
+	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
-		return
+
 	}
 
 	switch r.Method {
@@ -210,6 +210,11 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			log.Printf("fail: db.Exec, %v\n", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
+		} else {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(map[string]string{"message": "Item updated successfully"})
+
 		}
 
 		w.WriteHeader(http.StatusNoContent) // 成功時は204 No Contentを返す
