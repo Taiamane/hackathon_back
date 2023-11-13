@@ -16,7 +16,6 @@ import (
 	"github.com/oklog/ulid"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 )
 
@@ -224,11 +223,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 		w.WriteHeader(http.StatusOK)
 	case http.MethodPut:
-		vars := mux.Vars(r)
-		id := vars["id"] // URLからIDを取得
-		log.Printf("PUTリクエストが来ました。ID(MADE_DAY)は" + id)
 
 		var requestData ItemData
+		log.Printf("PUTリクエストが来ました")
 		err := json.NewDecoder(r.Body).Decode(&requestData)
 		if err != nil {
 			log.Printf("fail: json.NewDecoder, %v\n", err)
@@ -236,7 +233,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		_, err = db.Exec("UPDATE ITEMS SET CATEGORY=?, CURRICULUM=?, TITLE=?, LINK=?, SUMMARY=?, UPDATED_DAY=? WHERE MADE_DAY=?", requestData.Category, requestData.Curriculum, requestData.Title, requestData.Link, requestData.Summary, time.Now(), id)
+		log.Printf("Received request data: %+v\n", requestData)
+
+		_, err = db.Exec("UPDATE ITEMS SET CATEGORY=?, CURRICULUM=?, TITLE=?, LINK=?, SUMMARY=?, UPDATED_DAY=? WHERE MADE_DAY=?", requestData.Category, requestData.Curriculum, requestData.Title, requestData.Link, requestData.Summary, time.Now(), requestData.Made_day)
 		if err != nil {
 			log.Printf("fail: db.Exec, %v\n", err)
 			w.WriteHeader(http.StatusInternalServerError)
