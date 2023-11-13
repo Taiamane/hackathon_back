@@ -196,6 +196,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPut:
 		vars := mux.Vars(r)
 		id := vars["id"] // URLからIDを取得
+		log.Printf("PUTリクエストが来ました。ID(MADE_DAY)は" + id)
 
 		var requestData ItemData
 		err := json.NewDecoder(r.Body).Decode(&requestData)
