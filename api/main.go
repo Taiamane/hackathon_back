@@ -319,11 +319,10 @@ func handler_test(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	r := mux.NewRouter()
 
-	r.HandleFunc("/", handler)
-	r.HandleFunc("/items/{title}", editHandler).Methods("PUT")
-	r.HandleFunc("/items/delete/{title}", handler).Methods("DELETE")
+	http.HandleFunc("/", handler)
+	//r.HandleFunc("/items/{title}", editHandler).Methods("PUT")
+	//r.HandleFunc("/items/delete/{title}", handler).Methods("DELETE")
 
 	// ハンドラの登録
 	//http.HandleFunc("/", handler)
