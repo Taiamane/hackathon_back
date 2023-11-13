@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -181,18 +183,58 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			w.Write(response)
 		}
 	case http.MethodDelete:
-		vars := mux.Vars(r)
-		title := vars["title"] // パスパラメータからタイトルを取得
+		type deleteData struct {
+			Title string `json:"title"`
+			//Categoryid   string `json:"category"`
+			//Curriculumid string `json:"curriculum"`
+		}
 
-		_, err := db.Exec("DELETE FROM ITEMS WHERE TITLE=?", title)
-		log.Printf(title + "was Deleted")
+		// リクエストボディを読み取る
+		bodyBytes, err := io.ReadAll(r.Body)
 		if err != nil {
-			log.Printf("fail: db.Exec, %v\n", err)
-			w.WriteHeader(http.StatusInternalServerError)
+			log.Printf("Error reading body: %v", err)
+			http.Error(w, "can't read body", http.StatusBadRequest)
 			return
 		}
 
-		w.WriteHeader(http.StatusNoContent)
+		// リクエストボディの内容をログに記録
+		bodyString := string(bodyBytes)
+		log.Printf("Request Body: %s", bodyString)
+
+		// リクエストボディを再び利用可能にする
+		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+
+		decoder := json.NewDecoder(r.Body)
+		var deletereadData deleteData
+		if err := decoder.Decode(&deletereadData); err != nil {
+
+			log.Printf("fail: json.Decode, %v\n", err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		delete, err := db.Prepare(
+			"DELETE FROM ITEMS WHERE TITLE=?")
+		if err != nil {
+			log.Printf("delete err")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		delete.Exec(deletereadData.Title)
+
+		// case http.MethodDelete:
+		// 	vars := mux.Vars(r)
+		// 	title := vars["title"] // パスパラメータからタイトルを取得
+
+		// 	_, err := db.Exec("DELETE FROM ITEMS WHERE TITLE=?", title)
+		// 	log.Printf(title + "was Deleted")
+		// 	if err != nil {
+		// 		log.Printf("fail: db.Exec, %v\n", err)
+		// 		w.WriteHeader(http.StatusInternalServerError)
+		// 		return
+		// 	}
+
+		w.WriteHeader(http.StatusOK)
 	case http.MethodPut:
 		vars := mux.Vars(r)
 		id := vars["id"] // URLからIDを取得
@@ -219,98 +261,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.WriteHeader(http.StatusNoContent) // 成功時は204 No Contentを返す
-	default:
-		log.Printf("fail: HTTP Method is %s\n", r.Method)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-}
-
-func detailHandler(w http.ResponseWriter, r *http.Request) {
-	// w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000") // 後でVercelのURLに変更
-	// w.Header().Set("Access-Control-Allow-Methods", "GET")
-	// w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-
-	vars := mux.Vars(r)
-	id := vars["id"]
-
-	row := db.QueryRow("SELECT CATEGORY, CURRICULUM, TITLE, LINK, SUMMARY, MADE_DAY, UPDATED_DAY FROM ITEMS WHERE MADE_DAY = ?", id)
-
-	var item ItemData
-	err := row.Scan(&item.Category, &item.Curriculum, &item.Title, &item.Link, &item.Summary, &item.Made_day, &item.Updated_day)
-	if err != nil {
-		log.Printf("fail: db.QueryRow, %v\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	bytes, err := json.Marshal(item)
-	if err != nil {
-		log.Printf("fail: json.Marshal, %v\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(bytes)
-}
-
-func editHandler(w http.ResponseWriter, r *http.Request) {
-	// w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000") // 後でVercelのURLに変更
-	// w.Header().Set("Access-Control-Allow-Methods", "PUT")
-	// w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-
-	vars := mux.Vars(r)
-	id := vars["id"]
-
-	var requestData ItemData
-	err := json.NewDecoder(r.Body).Decode(&requestData)
-	if err != nil {
-		log.Printf("fail: json.NewDecoder, %v\n", err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	_, err = db.Exec("UPDATE ITEMS SET CATEGORY=?, CURRICULUM=?, TITLE=?, LINK=?, SUMMARY=?, UPDATED_DAY=? WHERE MADE_DAY=?", requestData.Category, requestData.Curriculum, requestData.Title, requestData.Link, requestData.Summary, time.Now(), id)
-	if err != nil {
-		log.Printf("fail: db.Exec, %v\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
-func deleteHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000") // 後でVercelのURLに変更
-	w.Header().Set("Access-Control-Allow-Methods", "DELETE")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-
-	vars := mux.Vars(r)
-	title := vars["title"]
-
-	_, err := db.Exec("DELETE FROM ITEMS WHERE TITLE=?", title)
-	if err != nil {
-		log.Printf("fail: db.Exec, %v\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
-func handler_test(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "OPTIONS,GET,POST,DELETE")
-	w.Header().Set("Access-Control-Allow-Headers", "*")
-	w.Header().Set("Content-Type", "application/json")
-
-	switch r.Method {
-	case http.MethodOptions:
-		w.WriteHeader(http.StatusOK)
-		return
-	// case http.MethodGet:
-	// 	log.Println("hello")
 	default:
 		log.Printf("fail: HTTP Method is %s\n", r.Method)
 		w.WriteHeader(http.StatusBadRequest)
