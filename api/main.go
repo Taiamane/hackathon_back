@@ -41,10 +41,10 @@ func init() {
 	// 	fmt.Printf("読み込み出来ませんでした: %v", err)
 	// }
 
-	//mysqlUser := os.Getenv("MYSQL_USER")
-	//mysqlUserPwd := os.Getenv("MYSQL_PASSWORD")
-	//mysqlHost := os.Getenv("MYSQL_HOST")
-	//mysqlDatabase := os.Getenv("MYSQL_DATABASE")
+	mysqlUser := os.Getenv("MYSQL_USER")
+	mysqlUserPwd := os.Getenv("MYSQL_PASSWORD")
+	mysqlHost := os.Getenv("MYSQL_HOST")
+	mysqlDatabase := os.Getenv("MYSQL_DATABASE")
 
 	connStr := fmt.Sprintf("%s:%s@%s/%s", mysqlUser, mysqlUserPwd, mysqlHost, mysqlDatabase)
 
