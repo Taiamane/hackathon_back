@@ -62,13 +62,13 @@ func init() {
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*") //後でvercelのURLに書き換える
-	w.Header().Set("Access-Control-Allow-Methods", "GET, POST,PUT,DELETE, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST,PUT,DELETE")
 	w.Header().Set("Access-Control-Allow-Headers", "*")
 	w.Header().Set("Content-Type", "application/json")
 
-	if r.Method == "OPTIONS" {
+	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
-
+		return
 	}
 
 	switch r.Method {
