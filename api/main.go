@@ -184,8 +184,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		type deleteData struct {
 			Title string `json:"title"`
-			//Categoryid   string `json:"category"`
-			//Curriculumid string `json:"curriculum"`
 		}
 
 		// リクエストボディを読み取る
