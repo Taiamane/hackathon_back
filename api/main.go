@@ -73,10 +73,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch r.Method {
-	case http.MethodOptions:
-		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST,DELETE,PUT, OPTIONS")
-		return
+	// case http.MethodOptions:
+	// 	w.WriteHeader(http.StatusOK)
+	// 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST,DELETE,PUT, OPTIONS")
+	// 	return
 	case http.MethodGet:
 		sortKey := r.URL.Query().Get("sort")
 		order := "made_day DESC" // デフォルトのソート順（作成日時の降順）
